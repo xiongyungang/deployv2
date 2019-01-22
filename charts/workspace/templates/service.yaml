@@ -1,0 +1,23 @@
+{{- if .Values.enabled -}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+    chart: {{ template "workspace.chart" . }}
+    appkey: {{ .Values.labels.appkey }}-{{ .Values.labels.channel}}
+    userAppkey: {{ .Values.labels.userAppkey }}
+  {{- range $key, $value := .Values.customLabels }}
+    {{ $key }}: "{{ $value }}"
+  {{- end }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: http
+      protocol: TCP
+      name: http
+  selector:
+    app: {{ .Release.Name }}
+{{- end }}

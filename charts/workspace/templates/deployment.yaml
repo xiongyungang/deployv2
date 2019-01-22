@@ -1,0 +1,77 @@
+{{- if .Values.enabled -}}
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+    chart: {{ template "workspace.chart" . }}
+    appkey: {{ .Values.labels.appkey }}-{{ .Values.labels.channel}}
+    userAppkey: {{ .Values.labels.userAppkey }}
+  {{- range $key, $value := .Values.customLabels }}
+    {{ $key }}: "{{ $value }}"
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+      {{- range $key, $value := .Values.customLabels }}
+        {{ $key }}: "{{ $value }}"
+      {{- end }}
+    spec:
+      imagePullSecrets:
+      - name: aliyun-registry-vpc
+#      initContainers:
+#      - name: git
+#        imagePullPolicy: {{ .Values.image.pullPolicy }}
+#        image: "{{ .Values.image.registry }}/itfarm/git"
+#        command: ["/sbin/my_init"]
+#        args: ["--", "ls", "-l"]
+#        volumeMounts:
+#        - mountPath: /opt/ci123/www/html
+#          name: code-data
+#        env:
+#        - name: PROJECT_GIT_URL
+#          value: "{{ .Values.envs.PROJECT_GIT_URL }}"
+#        - name: GIT_PRIVATE_KEY
+#          value: "{{ .Values.envs.GIT_PRIVATE_KEY}}"
+      containers:
+      - name: {{ .Chart.Name }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        image: "{{ .Values.image.registry }}/{{ .Values.image.repository }}"
+        volumeMounts:
+        - mountPath: /opt/ci123/www/html
+          name: code-data
+        ports:
+        - name: http
+          containerPort: 80
+          protocol: TCP
+    {{- with .Values.customEnvs }}
+        env:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+      volumes:
+      - name: code-data
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+{{- end }}

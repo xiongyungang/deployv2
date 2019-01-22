@@ -1,0 +1,10 @@
+apiVersion: v1
+appVersion: "1.0"
+description: A Helm chart for ItFarm Workspace
+name: workspace
+version: 0.1.0
+kubeVersion: ">=1.8.1"
+maintainers:
+  - name: Zhou Miao
+    email: zhoumiao@corp-ci.com
+tillerVersion: ">=2.9.0"

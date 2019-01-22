@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+    chart: {{ template "workspace.chart" . }}
+    appkey: {{ .Values.labels.appkey }}-{{ .Values.labels.channel}}
+    userAppkey: {{ .Values.labels.userAppkey }}
+  {{- range $key, $value := .Values.customLabels }}
+    {{ $key }}: "{{ $value }}"
+  {{- end }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+    - ReadWriteMany
+  storageClassName: nfs-ssd
+  resources:
+    requests:
+      storage: {{ .Values.pvc.storage }}

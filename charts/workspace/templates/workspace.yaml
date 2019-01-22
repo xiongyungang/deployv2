@@ -1,0 +1,64 @@
+{{- if .Values.enabled -}}
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-ssh
+  labels:
+    app: {{ .Release.Name }}-ssh
+    chart: {{ template "workspace.chart" . }}
+    appkey: {{ .Values.labels.appkey }}-{{ .Values.labels.channel}}
+    userAppkey: {{ .Values.labels.userAppkey }}
+  {{- range $key, $value := .Values.customLabels }}
+    {{ $key }}: "{{ $value }}"
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-ssh
+  minReadySeconds: 5
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-ssh
+      {{- range $key, $value := .Values.customLabels }}
+        {{ $key }}: "{{ $value }}"
+      {{- end }}
+    spec:
+      imagePullSecrets:
+      - name: aliyun-registry-vpc
+      containers:
+      - name: {{ .Chart.Name }}
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        image: "{{ .Values.image.registry }}/{{ .Values.image.workspaceRepository }}"
+        volumeMounts:
+        - mountPath: /opt/ci123/www/html
+          name: code-data
+        ports:
+        - name: ssh
+          containerPort: 22
+          protocol: TCP
+        env:
+        - name: GIT_PRIVATE_KEY
+          value: "{{ .Values.envs.GIT_PRIVATE_KEY }}"
+        - name: SSH_PUBLIC_KEY
+          value: "{{ .Values.envs.SSH_PUBLIC_KEY }}"
+{{ toYaml .Values.envs | indent 8 }}
+        resource:
+{{ toYaml .Values.resources | indent 10 }}
+      volumes:
+      - name: code-data
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}
+    {{- with .Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.affinity }}
+      affinity:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+    {{- with .Values.tolerations }}
+      tolerations:
+{{ toYaml . | indent 8 }}
+    {{- end }}
+{{- end }}
